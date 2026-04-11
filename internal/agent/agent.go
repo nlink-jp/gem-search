@@ -55,6 +55,7 @@ func (a *Agent) Run(ctx context.Context, query string) (*Report, error) {
 		{phaseVerify, a.verifySystemPrompt, a.verifyUserPrompt},
 	}
 
+	var phaseErr error
 	for _, phase := range phases {
 		name := phaseNames[phase.num]
 		log.Printf("[phase %d: %s] searching...", phase.num, name)
@@ -64,7 +65,10 @@ func (a *Agent) Run(ctx context.Context, query string) (*Report, error) {
 
 		resp, err := a.client.Generate(ctx, systemPrompt, userPrompt)
 		if err != nil {
-			return nil, fmt.Errorf("phase %d (%s): %w", phase.num, name, err)
+			// Log the error but don't abort — compile report from what we have.
+			log.Printf("[phase %d: %s] error (continuing with partial results): %v", phase.num, name, err)
+			phaseErr = fmt.Errorf("phase %d (%s): %w", phase.num, name, err)
+			break
 		}
 
 		// Record phase result
@@ -88,10 +92,29 @@ func (a *Agent) Run(ctx context.Context, query string) (*Report, error) {
 		accumulated.WriteString(fmt.Sprintf("\n\n## Phase %d: %s\n%s", phase.num, name, resp.Text))
 	}
 
-	// Generate final report from all 3 phases
-	log.Printf("[report] compiling final report...")
+	// If no phases completed at all, return the error
+	if len(report.Rounds) == 0 && phaseErr != nil {
+		return nil, phaseErr
+	}
+
+	// Generate final report from whatever phases completed
+	if phaseErr != nil {
+		log.Printf("[report] compiling partial report (%d of 3 phases completed)...", len(report.Rounds))
+	} else {
+		log.Printf("[report] compiling final report...")
+	}
 	finalResp, err := a.generateReport(ctx, tag, query, accumulated.String())
 	if err != nil {
+		// If report generation also fails but we have phase data, return what we have
+		if len(report.Rounds) > 0 {
+			log.Printf("[report] generation failed, returning phase data only: %v", err)
+			report.Report = "(Report generation failed. Phase data is available in the rounds field.)"
+			report.Title = query
+			for _, s := range sourceMap {
+				report.Sources = append(report.Sources, s)
+			}
+			return report, nil
+		}
 		return nil, fmt.Errorf("report generation: %w", err)
 	}
 
