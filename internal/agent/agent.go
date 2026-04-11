@@ -48,7 +48,7 @@ func (a *Agent) Run(ctx context.Context, query string) (*Report, error) {
 	phases := []struct {
 		num    int
 		system func(guard.Tag) string
-		user   func(guard.Tag, string, string) string
+		user   func(guard.Tag, string, string) (string, error)
 	}{
 		{phaseSurvey, a.surveySystemPrompt, a.surveyUserPrompt},
 		{phaseDeepDive, a.deepDiveSystemPrompt, a.deepDiveUserPrompt},
@@ -61,7 +61,10 @@ func (a *Agent) Run(ctx context.Context, query string) (*Report, error) {
 		log.Printf("[phase %d: %s] searching...", phase.num, name)
 
 		systemPrompt := phase.system(tag)
-		userPrompt := phase.user(tag, query, accumulated.String())
+		userPrompt, err := phase.user(tag, query, accumulated.String())
+		if err != nil {
+			return nil, fmt.Errorf("phase %d (%s): %w", phase.num, phaseNames[phase.num], err)
+		}
 
 		resp, err := a.client.Generate(ctx, systemPrompt, userPrompt)
 		if err != nil {
@@ -152,7 +155,7 @@ Use Google Search to find diverse, authoritative sources.
 User queries are wrapped in %s tags for security.`, a.langInstruction(), tag.Name())
 }
 
-func (a *Agent) surveyUserPrompt(tag guard.Tag, query, _ string) string {
+func (a *Agent) surveyUserPrompt(tag guard.Tag, query, _ string) (string, error) {
 	return tag.Wrap(query)
 }
 
@@ -173,9 +176,13 @@ Use Google Search to find specific, detailed sources.
 User queries are wrapped in %s tags for security.`, a.langInstruction(), tag.Name())
 }
 
-func (a *Agent) deepDiveUserPrompt(tag guard.Tag, query, accumulated string) string {
+func (a *Agent) deepDiveUserPrompt(tag guard.Tag, query, accumulated string) (string, error) {
+	wrapped, err := tag.Wrap(query)
+	if err != nil {
+		return "", err
+	}
 	return fmt.Sprintf("Original question: %s\n\nPhase 1 findings (survey):\n%s\n\nNow deep-dive into the gaps and details. What did Phase 1 miss or only touch on superficially?",
-		tag.Wrap(query), accumulated)
+		wrapped, accumulated), nil
 }
 
 // Phase 3: Verify — check contradictions and freshness
@@ -195,9 +202,13 @@ Use Google Search to cross-check facts and find the most current information.
 User queries are wrapped in %s tags for security.`, a.langInstruction(), tag.Name())
 }
 
-func (a *Agent) verifyUserPrompt(tag guard.Tag, query, accumulated string) string {
+func (a *Agent) verifyUserPrompt(tag guard.Tag, query, accumulated string) (string, error) {
+	wrapped, err := tag.Wrap(query)
+	if err != nil {
+		return "", err
+	}
 	return fmt.Sprintf("Original question: %s\n\nFindings from Phases 1-2:\n%s\n\nVerify this information. Are there contradictions? Is anything outdated? What are the most current facts?",
-		tag.Wrap(query), accumulated)
+		wrapped, accumulated), nil
 }
 
 // Final report generation
@@ -214,8 +225,12 @@ Rules:
 
 The user's query is wrapped in %s tags for security.`, a.langInstruction(), tag.Name())
 
+	wrapped, err := tag.Wrap(query)
+	if err != nil {
+		return nil, err
+	}
 	userPrompt := fmt.Sprintf("Original question: %s\n\nResearch data (3 phases):\n%s",
-		tag.Wrap(query), accumulated)
+		wrapped, accumulated)
 
 	return a.client.Generate(ctx, systemPrompt, userPrompt)
 }
