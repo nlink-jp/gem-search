@@ -17,6 +17,7 @@ func sampleReport() *agent.Report {
 		Rounds: []agent.RoundResult{
 			{
 				Round:       1,
+				Phase:       "survey",
 				Queries:     []string{"web grounding AI"},
 				SourceCount: 3,
 				Analysis:    "Found comprehensive information.",
@@ -36,7 +37,7 @@ func TestFormatMarkdown(t *testing.T) {
 		"# Web Grounding Overview",
 		"## Overview",
 		"## Search Process",
-		"### Round 1",
+		"### Phase 1: survey",
 		"web grounding AI",
 		"## Sources",
 		"https://example.com/grounding",

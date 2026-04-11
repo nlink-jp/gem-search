@@ -12,9 +12,10 @@ type Report struct {
 	Sources []Source      `json:"sources"`
 }
 
-// RoundResult captures one round of the agent loop.
+// RoundResult captures one phase of the research pipeline.
 type RoundResult struct {
 	Round       int      `json:"round"`
+	Phase       string   `json:"phase"`
 	Queries     []string `json:"queries,omitempty"`
 	SourceCount int      `json:"source_count"`
 	Analysis    string   `json:"analysis"`

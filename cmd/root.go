@@ -19,18 +19,17 @@ import (
 const maxQueryLength = 1000
 
 var (
-	flagFormat    string
-	flagOutput    string
-	flagMaxRounds int
-	flagLang      string
+	flagFormat string
+	flagOutput string
+	flagLang   string
 )
 
 var rootCmd = &cobra.Command{
 	Use:   "gem-search [query]",
 	Short: "Agentic web search using Vertex AI Gemini with Google Search Grounding",
 	Long: `gem-search accepts a natural language query, uses Vertex AI Gemini with
-Google Search Grounding to autonomously search the web, and produces a
-structured Markdown or JSON report.`,
+Google Search Grounding to autonomously search the web in 3 phases
+(survey → deep-dive → verify), and produces a structured Markdown or JSON report.`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: run,
 }
@@ -40,7 +39,6 @@ func Execute(version string) {
 	rootCmd.Version = version
 	rootCmd.Flags().StringVar(&flagFormat, "format", "markdown", "Output format: json, markdown, both")
 	rootCmd.Flags().StringVarP(&flagOutput, "output", "o", "", "Output file prefix (appends .md/.json)")
-	rootCmd.Flags().IntVar(&flagMaxRounds, "max-rounds", 3, "Maximum autonomous search rounds")
 	rootCmd.Flags().StringVar(&flagLang, "lang", "", "Output language code (e.g. ja, en)")
 
 	if err := rootCmd.Execute(); err != nil {
@@ -49,7 +47,6 @@ func Execute(version string) {
 }
 
 func run(cmd *cobra.Command, args []string) error {
-	// Read query
 	query, err := readQuery(args)
 	if err != nil {
 		return err
@@ -58,22 +55,19 @@ func run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("query too long: %d characters (max %d)", len(query), maxQueryLength)
 	}
 
-	// Validate format
 	switch flagFormat {
 	case "json", "markdown", "both":
 	default:
 		return fmt.Errorf("invalid format: %s (must be json, markdown, or both)", flagFormat)
 	}
 
-	// Load config
 	cfg, err := config.Load()
 	if err != nil {
 		return err
 	}
-	cfg.ApplyFlags(flagFormat, flagOutput, flagLang, flagMaxRounds)
+	cfg.ApplyFlags(flagFormat, flagOutput, flagLang)
 
-	// Create Gemini client
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
 	client, err := gemini.NewClient(ctx, cfg.Project, cfg.Location, cfg.Model)
@@ -81,14 +75,12 @@ func run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Create and run agent
-	ag := agent.New(client, cfg.MaxRounds, cfg.Lang)
+	ag := agent.New(client, cfg.Lang)
 	report, err := ag.Run(ctx, query)
 	if err != nil {
 		return fmt.Errorf("agent error: %w", err)
 	}
 
-	// Output
 	return output.Write(report, cfg.Format, cfg.Output)
 }
 

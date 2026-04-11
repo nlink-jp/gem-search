@@ -64,16 +64,13 @@ func TestApplyFlagsOverridesLang(t *testing.T) {
 	os.Setenv("GEMSEARCH_LANG", "en")
 
 	cfg, _ := Load()
-	cfg.ApplyFlags("json", "./out", "ja", 5)
+	cfg.ApplyFlags("json", "./out", "ja")
 
 	if cfg.Lang != "ja" {
 		t.Errorf("Lang = %q, want %q (flag should override env)", cfg.Lang, "ja")
 	}
 	if cfg.Format != "json" {
 		t.Errorf("Format = %q", cfg.Format)
-	}
-	if cfg.MaxRounds != 5 {
-		t.Errorf("MaxRounds = %d", cfg.MaxRounds)
 	}
 }
 
@@ -82,7 +79,7 @@ func TestApplyFlagsKeepsEnvLang(t *testing.T) {
 	os.Setenv("GEMSEARCH_LANG", "en")
 
 	cfg, _ := Load()
-	cfg.ApplyFlags("markdown", "", "", 3) // empty lang flag
+	cfg.ApplyFlags("markdown", "", "") // empty lang flag
 
 	if cfg.Lang != "en" {
 		t.Errorf("Lang = %q, want %q (env should be kept)", cfg.Lang, "en")

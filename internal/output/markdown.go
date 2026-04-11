@@ -27,7 +27,11 @@ func FormatMarkdown(r *agent.Report) string {
 	if len(r.Rounds) > 0 {
 		sb.WriteString("---\n\n## Search Process\n\n")
 		for _, round := range r.Rounds {
-			fmt.Fprintf(&sb, "### Round %d\n\n", round.Round)
+			phaseLabel := round.Phase
+			if phaseLabel == "" {
+				phaseLabel = fmt.Sprintf("round %d", round.Round)
+			}
+			fmt.Fprintf(&sb, "### Phase %d: %s\n\n", round.Round, phaseLabel)
 
 			if len(round.Queries) > 0 {
 				fmt.Fprintf(&sb, "**Search queries:** %s\n\n", strings.Join(round.Queries, ", "))
