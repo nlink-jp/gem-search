@@ -10,8 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - Initial implementation
-- Agentic web search loop via Vertex AI Gemini with Google Search Grounding
+- Fixed 3-phase research pipeline: Survey → Deep-dive → Verify
+- Vertex AI Gemini with Google Search Grounding integration
 - Markdown and JSON output formats with file output support
-- Multi-round autonomous search support
 - Output language specification (`--lang`)
 - Pipeline support (stdin/stdout)

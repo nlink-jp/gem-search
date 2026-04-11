@@ -46,9 +46,6 @@ gem-search --format json "Vertex AI pricing"
 gem-search --format both -o ./report "topic to research"
 # → ./report.md + ./report.json
 
-# Control search depth
-gem-search --max-rounds 5 "complex research topic"
-
 # Output in a specific language
 gem-search --lang ja "English topic, Japanese report"
 ```
@@ -59,22 +56,22 @@ gem-search --lang ja "English topic, Japanese report"
 |------|---------|-------------|
 | `--format` | `markdown` | Output format: `json`, `markdown`, `both` |
 | `-o, --output` | (stdout) | Output file prefix (appends `.md`/`.json`) |
-| `--max-rounds` | `3` | Maximum autonomous search rounds (cap: 10) |
 | `--lang` | (none) | Output language code (e.g. `ja`, `en`) |
 
 ## How It Works
 
 ```
-Query → Gemini + Google Search Grounding
-         → LLM analyzes grounding results
-           → Decides: search more / done
-             → Compiles final report
+Query → Phase 1: Survey (broad overview)
+         → Phase 2: Deep-dive (fill gaps, gather details)
+           → Phase 3: Verify (cross-check, find updates)
+             → Compile final report from all 3 phases
                → Output (Markdown / JSON)
 ```
 
-The agent loop runs up to `--max-rounds` iterations. Gemini's Google Search
-Grounding provides web search results and pre-extracted content in a single
-API call — no separate search API or web scraping required.
+Every search runs a fixed 3-phase research pipeline. Each phase uses Gemini
+with Google Search Grounding for a different purpose — survey maps the
+landscape, deep-dive fills gaps, verify checks for contradictions and currency.
+This ensures thorough coverage rather than letting the LLM decide to stop early.
 
 ## Background
 
@@ -101,6 +98,7 @@ make clean       # Remove dist/
 
 ## Documentation
 
+- [Architecture](docs/en/architecture.md) — Design decisions and their rationale
 - [RFP](docs/en/gem-search-rfp.md) — Requirements document
 
 ## License

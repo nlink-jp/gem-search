@@ -43,9 +43,6 @@ gem-search --format json "Vertex AIの料金体系"
 gem-search --format both -o ./report "調査したいトピック"
 # → ./report.md + ./report.json
 
-# 検索の深さを制御
-gem-search --max-rounds 5 "複雑な調査トピック"
-
 # 出力言語を指定
 gem-search --lang ja "English topic, Japanese report"
 ```
@@ -56,20 +53,19 @@ gem-search --lang ja "English topic, Japanese report"
 |--------|-----------|------|
 | `--format` | `markdown` | 出力形式: `json`, `markdown`, `both` |
 | `-o, --output` | (stdout) | 出力ファイルプレフィックス（`.md`/`.json`を付与） |
-| `--max-rounds` | `3` | 自律検索ラウンドの上限（最大: 10） |
 | `--lang` | (なし) | 出力言語コード（例: `ja`, `en`） |
 
 ## 仕組み
 
 ```
-クエリ → Gemini + Google Search Grounding
-          → LLMがGrounding結果を分析
-            → 判断: 追加検索 / 完了
-              → 最終レポート生成
+クエリ → Phase 1: Survey（広く概要を把握）
+          → Phase 2: Deep-dive（不足を深掘り）
+            → Phase 3: Verify（矛盾・最新情報を検証）
+              → 3フェーズの成果から最終レポート生成
                 → 出力（Markdown / JSON）
 ```
 
-エージェントループは`--max-rounds`回まで繰り返す。GeminiのGoogle Search Groundingが1回のAPI呼び出しでWeb検索結果と事前抽出コンテンツを提供する — 別途の検索APIやWebスクレイピングは不要。
+すべての検索は固定3フェーズの調査パイプラインで実行される。各フェーズはGeminiのGoogle Search Groundingを異なる目的で使用する — Surveyで全体像を把握し、Deep-diveで不足を埋め、Verifyで矛盾と鮮度を検証する。LLMに「もう十分」と判断させるのではなく、常に3フェーズを実行して網羅性を確保する。
 
 ## 経緯
 
@@ -88,6 +84,7 @@ make clean       # dist/を削除
 
 ## ドキュメント
 
+- [アーキテクチャ](docs/ja/architecture.ja.md) — 設計判断とその根拠
 - [RFP](docs/ja/gem-search-rfp.ja.md) — 要件定義書
 
 ## ライセンス
