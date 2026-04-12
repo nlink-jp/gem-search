@@ -3,7 +3,7 @@ module github.com/nlink-jp/gem-search
 go 1.26.2
 
 require (
-	github.com/nlink-jp/nlk v0.5.0
+	github.com/nlink-jp/nlk v0.5.1
 	github.com/spf13/cobra v1.10.2
 	google.golang.org/genai v1.53.0
 )
