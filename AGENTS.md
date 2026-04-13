@@ -25,7 +25,7 @@ gem-search/
 ├── main.go                 ← entry point
 ├── cmd/root.go             ← cobra command, flag definitions
 ├── internal/
-│   ├── config/             ← GEMSEARCH_* env var loading
+│   ├── config/             ← TOML + env var configuration
 │   ├── gemini/             ← Vertex AI client + Grounding
 │   ├── agent/              ← agentic loop orchestrator
 │   └── output/             ← Markdown/JSON output formatters
@@ -33,12 +33,15 @@ gem-search/
 └── docs/                   ← RFP and design documents
 ```
 
-## Environment variables
+## Configuration
+
+Config loaded: defaults → TOML (`~/.config/gem-search/config.toml`) → env vars → CLI flags.
 
 - `GEMSEARCH_PROJECT` (required) — GCP project ID
 - `GEMSEARCH_LOCATION` (optional, default: us-central1) — Vertex AI region
 - `GEMSEARCH_MODEL` (optional, default: gemini-2.5-flash) — model name
 - `GEMSEARCH_LANG` (optional) — output language
+- `GOOGLE_CLOUD_PROJECT` / `GOOGLE_CLOUD_LOCATION` — generic fallback
 
 ## Research pipeline
 

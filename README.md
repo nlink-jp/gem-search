@@ -23,12 +23,42 @@ make build
 
 ## Configuration
 
+Settings are loaded in this order (higher priority wins):
+
+1. **Defaults** — built-in values
+2. **TOML file** — `~/.config/gem-search/config.toml` (or `-c` flag)
+3. **Environment variables** — `GEMSEARCH_*` (tool-specific) > `GOOGLE_CLOUD_*` (generic)
+4. **CLI flags** — highest priority
+
+### Config file
+
+Copy the example and edit:
+
+```bash
+mkdir -p ~/.config/gem-search
+cp config.example.toml ~/.config/gem-search/config.toml
+```
+
+```toml
+[gcp]
+project  = "your-project-id"
+location = "us-central1"
+
+[model]
+name = "gemini-2.5-flash"
+lang = ""
+```
+
+### Environment variables
+
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `GEMSEARCH_PROJECT` | Yes | — | GCP project ID |
 | `GEMSEARCH_LOCATION` | No | `us-central1` | Vertex AI region |
 | `GEMSEARCH_MODEL` | No | `gemini-2.5-flash` | Gemini model name |
 | `GEMSEARCH_LANG` | No | — | Output language |
+| `GOOGLE_CLOUD_PROJECT` | — | — | Fallback for `GEMSEARCH_PROJECT` |
+| `GOOGLE_CLOUD_LOCATION` | — | — | Fallback for `GEMSEARCH_LOCATION` |
 
 ## Usage
 
@@ -54,6 +84,7 @@ gem-search --lang ja "English topic, Japanese report"
 
 | Flag | Default | Description |
 |------|---------|-------------|
+| `-c, --config` | `~/.config/gem-search/config.toml` | Config file path |
 | `--format` | `markdown` | Output format: `json`, `markdown`, `both` |
 | `-o, --output` | (stdout) | Output file prefix (appends `.md`/`.json`) |
 | `--lang` | (none) | Output language code (e.g. `ja`, `en`) |

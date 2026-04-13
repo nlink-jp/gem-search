@@ -19,6 +19,7 @@ import (
 const maxQueryLength = 1000
 
 var (
+	flagConfig string
 	flagFormat string
 	flagOutput string
 	flagLang   string
@@ -37,6 +38,7 @@ Google Search Grounding to autonomously search the web in 3 phases
 // Execute runs the root command.
 func Execute(version string) {
 	rootCmd.Version = version
+	rootCmd.Flags().StringVarP(&flagConfig, "config", "c", "", "Config file path (default: ~/.config/gem-search/config.toml)")
 	rootCmd.Flags().StringVar(&flagFormat, "format", "markdown", "Output format: json, markdown, both")
 	rootCmd.Flags().StringVarP(&flagOutput, "output", "o", "", "Output file prefix (appends .md/.json)")
 	rootCmd.Flags().StringVar(&flagLang, "lang", "", "Output language code (e.g. ja, en)")
@@ -61,7 +63,7 @@ func run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid format: %s (must be json, markdown, or both)", flagFormat)
 	}
 
-	cfg, err := config.Load()
+	cfg, err := config.Load(flagConfig)
 	if err != nil {
 		return err
 	}
@@ -70,7 +72,7 @@ func run(cmd *cobra.Command, args []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
-	client, err := gemini.NewClient(ctx, cfg.Project, cfg.Location, cfg.Model)
+	client, err := gemini.NewClient(ctx, cfg.GCP.Project, cfg.GCP.Location, cfg.Model.Name)
 	if err != nil {
 		return err
 	}

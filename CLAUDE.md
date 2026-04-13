@@ -25,7 +25,12 @@ make test           # or: go test ./...
 make build-all      # cross-compile 5 platforms
 ```
 
-## Environment variables
+## Configuration
+
+Settings are loaded: defaults → TOML file → env vars → CLI flags.
+
+- **Config file**: `~/.config/gem-search/config.toml` (or `-c` flag)
+- **Env vars**: `GEMSEARCH_*` (tool-specific) > `GOOGLE_CLOUD_*` (generic fallback)
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
@@ -39,10 +44,11 @@ make build-all      # cross-compile 5 platforms
 - `google.golang.org/genai` — Google Gemini SDK (Vertex AI backend)
 - `github.com/nlink-jp/nlk` — LLM pre/post-processing
 - `github.com/spf13/cobra` — CLI framework
+- `github.com/BurntSushi/toml` — config file parsing
 
 ## Architecture
 
-- `internal/config/` — environment variable configuration
+- `internal/config/` — TOML + environment variable configuration
 - `internal/gemini/` — Vertex AI Gemini client with Google Search Grounding
 - `internal/agent/` — agentic loop orchestrator
 - `internal/output/` — Markdown/JSON formatters

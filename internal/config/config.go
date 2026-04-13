@@ -1,9 +1,12 @@
-// Package config provides configuration for gem-search.
+// Package config manages gem-search configuration.
 package config
 
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+
+	"github.com/BurntSushi/toml"
 )
 
 const (
@@ -11,45 +14,91 @@ const (
 	DefaultModel    = "gemini-2.5-flash"
 )
 
-// Config holds runtime configuration.
+// Config holds all gem-search configuration.
 type Config struct {
-	Project  string // GCP project ID
-	Location string // Vertex AI region
-	Model    string // Gemini model name
-	Format   string // Output format: json, markdown, both
-	Output   string // Output file prefix
-	Lang     string // Output language code
+	GCP   GCPConfig   `toml:"gcp"`
+	Model ModelConfig `toml:"model"`
+
+	// Runtime-only fields (not in TOML).
+	Format string `toml:"-"`
+	Output string `toml:"-"`
+	Lang   string `toml:"-"`
 }
 
-// Load reads configuration from environment variables.
-func Load() (*Config, error) {
-	c := &Config{
-		Project:  os.Getenv("GEMSEARCH_PROJECT"),
-		Location: envOrDefault("GEMSEARCH_LOCATION", DefaultLocation),
-		Model:    envOrDefault("GEMSEARCH_MODEL", DefaultModel),
-		Lang:     os.Getenv("GEMSEARCH_LANG"),
+// GCPConfig holds Google Cloud settings.
+type GCPConfig struct {
+	Project  string `toml:"project"`
+	Location string `toml:"location"`
+}
+
+// ModelConfig holds model settings.
+type ModelConfig struct {
+	Name string `toml:"name"`
+	Lang string `toml:"lang"`
+}
+
+// Load reads config from the given path, with env var overrides.
+// If path is empty, tries the default location (~/.config/gem-search/config.toml).
+func Load(path string) (*Config, error) {
+	cfg := &Config{
+		GCP: GCPConfig{
+			Location: DefaultLocation,
+		},
+		Model: ModelConfig{
+			Name: DefaultModel,
+		},
 	}
 
-	if c.Project == "" {
-		return nil, fmt.Errorf("GEMSEARCH_PROJECT is required")
+	if path == "" {
+		home, err := os.UserHomeDir()
+		if err == nil {
+			path = filepath.Join(home, ".config", "gem-search", "config.toml")
+		}
 	}
 
-	return c, nil
+	if path != "" {
+		if _, err := os.Stat(path); err == nil {
+			if _, err := toml.DecodeFile(path, cfg); err != nil {
+				return nil, fmt.Errorf("parse config %s: %w", path, err)
+			}
+		}
+	}
+
+	// TOML model.lang → runtime Lang
+	if cfg.Model.Lang != "" {
+		cfg.Lang = cfg.Model.Lang
+	}
+
+	// Env overrides (tool-specific > generic)
+	if v := os.Getenv("GEMSEARCH_PROJECT"); v != "" {
+		cfg.GCP.Project = v
+	} else if v := os.Getenv("GOOGLE_CLOUD_PROJECT"); v != "" {
+		cfg.GCP.Project = v
+	}
+	if v := os.Getenv("GEMSEARCH_LOCATION"); v != "" {
+		cfg.GCP.Location = v
+	} else if v := os.Getenv("GOOGLE_CLOUD_LOCATION"); v != "" {
+		cfg.GCP.Location = v
+	}
+	if v := os.Getenv("GEMSEARCH_MODEL"); v != "" {
+		cfg.Model.Name = v
+	}
+	if v := os.Getenv("GEMSEARCH_LANG"); v != "" {
+		cfg.Lang = v
+	}
+
+	if cfg.GCP.Project == "" {
+		return nil, fmt.Errorf("GCP project is required: set gcp.project in config or GOOGLE_CLOUD_PROJECT env var")
+	}
+
+	return cfg, nil
 }
 
 // ApplyFlags merges CLI flag values into the config.
 func (c *Config) ApplyFlags(format, output, lang string) {
 	c.Format = format
 	c.Output = output
-	// CLI flag overrides env var
 	if lang != "" {
 		c.Lang = lang
 	}
-}
-
-func envOrDefault(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return fallback
 }

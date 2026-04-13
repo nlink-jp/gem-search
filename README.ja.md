@@ -20,12 +20,42 @@ make build
 
 ## 設定
 
+設定は以下の順序で読み込まれる（後のものが優先）：
+
+1. **デフォルト値** — 組み込み値
+2. **TOMLファイル** — `~/.config/gem-search/config.toml`（または `-c` フラグで指定）
+3. **環境変数** — `GEMSEARCH_*`（ツール固有） > `GOOGLE_CLOUD_*`（汎用）
+4. **CLIフラグ** — 最優先
+
+### 設定ファイル
+
+サンプルをコピーして編集：
+
+```bash
+mkdir -p ~/.config/gem-search
+cp config.example.toml ~/.config/gem-search/config.toml
+```
+
+```toml
+[gcp]
+project  = "your-project-id"
+location = "us-central1"
+
+[model]
+name = "gemini-2.5-flash"
+lang = ""
+```
+
+### 環境変数
+
 | 変数 | 必須 | デフォルト | 説明 |
 |------|------|-----------|------|
 | `GEMSEARCH_PROJECT` | はい | — | GCPプロジェクトID |
 | `GEMSEARCH_LOCATION` | いいえ | `us-central1` | Vertex AIリージョン |
 | `GEMSEARCH_MODEL` | いいえ | `gemini-2.5-flash` | Geminiモデル名 |
 | `GEMSEARCH_LANG` | いいえ | — | 出力言語 |
+| `GOOGLE_CLOUD_PROJECT` | — | — | `GEMSEARCH_PROJECT`のフォールバック |
+| `GOOGLE_CLOUD_LOCATION` | — | — | `GEMSEARCH_LOCATION`のフォールバック |
 
 ## 使い方
 
@@ -51,6 +81,7 @@ gem-search --lang ja "English topic, Japanese report"
 
 | フラグ | デフォルト | 説明 |
 |--------|-----------|------|
+| `-c, --config` | `~/.config/gem-search/config.toml` | 設定ファイルパス |
 | `--format` | `markdown` | 出力形式: `json`, `markdown`, `both` |
 | `-o, --output` | (stdout) | 出力ファイルプレフィックス（`.md`/`.json`を付与） |
 | `--lang` | (なし) | 出力言語コード（例: `ja`, `en`） |
