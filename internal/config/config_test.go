@@ -14,6 +14,11 @@ func clearEnv(t *testing.T) {
 	} {
 		os.Unsetenv(key)
 	}
+	// Isolate XDG/HOME so the user's real ~/.config/gem-search/config.toml
+	// doesn't leak into tests. Without this, TestLoadMissingProject fails
+	// on a developer machine that has a real config installed.
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Cleanup(func() {
 		for _, key := range []string{
 			"GEMSEARCH_PROJECT", "GEMSEARCH_LOCATION", "GEMSEARCH_MODEL", "GEMSEARCH_LANG",
