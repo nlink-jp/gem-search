@@ -22,7 +22,7 @@ component (stdin/stdout).
 ```bash
 make build          # → dist/gem-search
 make test           # or: go test ./...
-make build-all      # cross-compile 5 platforms
+make build-all      # cross-compile 4 platforms (darwin arm64 only; no Intel)
 ```
 
 ## Configuration
