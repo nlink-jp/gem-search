@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] - 2026-07-12
+
+### Removed
+
+- **darwin/amd64 (Intel) pre-built binary.** macOS releases now ship
+  **arm64 only**, following the org-wide policy (darwin is Apple-Silicon
+  only; universal binaries are not produced). Intel Mac users can still
+  build from source via `go install` / `make build`.
+
+### Changed
+
+- **Release archive names unified** to
+  `gem-search-v<version>-<os>-<arch>.<ext>` across all platforms, per
+  `nlink-jp/.github` CONVENTIONS.md §Release Archive Standard (previously
+  `gem-search-<os>-<arch>-v<version>.zip`).
+- **Linux archives are now `.tar.gz`** (darwin/windows remain `.zip`).
+- **`LICENSE` is now bundled** in every release archive alongside `README.md`.
+- **darwin code-signature identifier** is now the canonical `gem-search`
+  (previously the build-time `gem-search-darwin-arm64`).
+
+### Fixed
+
+- Store the binary under its canonical name (`gem-search`) inside release
+  archives, so unzip yields `gem-search` directly.
+- Notarization surfaces the real `notarytool` error (e.g. an expired Apple
+  Developer agreement / HTTP 403) instead of a misleading "profile not
+  found" message.
+
+No change to the binary's behaviour — this is a packaging / build-config release.
+
 ## [0.3.2] - 2026-05-22
 
 ### Added
