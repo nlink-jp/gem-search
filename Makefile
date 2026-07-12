@@ -14,6 +14,13 @@ NOTARY_PROFILE    ?= nlink-jp-notary
 # darwin ships arm64 only (no amd64, no universal). linux/windows keep their matrix.
 PLATFORMS := darwin/arm64 linux/amd64 linux/arm64 windows/amd64
 
+# Homebrew tap generation (see scripts/release-brew.mk). After `make package`,
+# `make brew` generates this formula from the built darwin-arm64 zip into the
+# local nlink-jp/homebrew-tap checkout.
+BREW_KIND := formula
+BREW_DESC := Agentic web search CLI using Vertex AI Grounding
+include scripts/release-brew.mk
+
 .PHONY: build build-all package test clean
 
 build:
