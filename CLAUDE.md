@@ -44,7 +44,7 @@ Settings are loaded: defaults → TOML file → env vars → CLI flags.
 - `google.golang.org/genai` — Google Gemini SDK (Vertex AI backend)
 - `github.com/nlink-jp/nlk` — LLM pre/post-processing
 - `github.com/spf13/cobra` — CLI framework
-- `github.com/BurntSushi/toml` — config file parsing
+- `github.com/nlink-jp/toml` — config file parsing (strict: an unknown key is an error)
 
 ## Architecture
 
