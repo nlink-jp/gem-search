@@ -21,7 +21,7 @@ BREW_KIND := formula
 BREW_DESC := Agentic web search CLI using Vertex AI Grounding
 include scripts/release-brew.mk
 
-.PHONY: build build-all package verify-release test clean
+.PHONY: build build-all package verify-release test clean vuln
 
 build:
 	@mkdir -p $(DIST_DIR)
@@ -36,10 +36,17 @@ build-all:
 	done
 	@scripts/codesign-darwin.sh $(DIST_DIR)/$(BINARY)-darwin-arm64 "$(CODESIGN_IDENTITY)" "$(BINARY)"
 
+## vuln: known vulnerabilities in the modules and the standard library this
+## build uses (govulncheck). `package` depends on it, so a release cannot be
+## built past a finding. It needs the network, and its database changes under
+## an unchanged tree: a finding can appear without a commit.
+vuln:
+	govulncheck ./...
+
 ## package: archive each platform as <name>-v<version>-<os>-<arch>.<ext>
 ## (darwin/windows=zip, linux=tar.gz); canonical binary + README + LICENSE inside;
 ## notarize the darwin arm64 zip.
-package: build-all
+package: vuln build-all
 	@cd $(DIST_DIR) && for p in $(PLATFORMS); do os=$${p%/*}; arch=$${p#*/}; \
 		ext=""; [ "$$os" = windows ] && ext=".exe"; \
 		stage=_pkg; rm -rf $$stage; mkdir -p $$stage; \

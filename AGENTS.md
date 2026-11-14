@@ -11,6 +11,7 @@ Part of util-series. Predecessor: agentic-web-search (frozen, Brave API ToS).
 make build          # Build → dist/gem-search
 make test           # Run all tests
 make build-all      # Cross-compile for 5 platforms
+make vuln            # govulncheck over the build; `make package` runs it first and stops on a finding
 make verify-release  # gate: notarized, fresh, runs at this version, clean linux archives (run before upload)
 make clean          # Remove dist/
 ```
